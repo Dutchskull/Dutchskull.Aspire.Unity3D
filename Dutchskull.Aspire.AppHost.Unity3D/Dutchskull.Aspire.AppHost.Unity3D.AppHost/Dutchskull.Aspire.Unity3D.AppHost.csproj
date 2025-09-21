@@ -1,0 +1,21 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+	<Sdk Name="Aspire.AppHost.Sdk" Version="9.6.0-preview.1.25470.2" />
+
+	<PropertyGroup>
+		<OutputType>Exe</OutputType>
+		<TargetFramework>net8.0</TargetFramework>
+		<ImplicitUsings>enable</ImplicitUsings>
+		<Nullable>enable</Nullable>
+		<UserSecretsId>7553225c-d4f5-4cbb-bedd-e1ada381995d</UserSecretsId>
+	</PropertyGroup>
+
+	<ItemGroup>
+		<PackageReference Include="Aspire.Hosting.AppHost" Version="9.6.0-preview.1.25470.2" />
+	</ItemGroup>
+
+	<ItemGroup>
+		<ProjectReference Include="..\Dutchskull.Aspire.AppHost.Unity3D\Dutchskull.Aspire.Unity3D.Hosting.csproj" IsAspireProjectResource="false" />
+	</ItemGroup>
+
+</Project>

@@ -1,0 +1,14 @@
+{
+  "name": "nl.dutchskull.aspire-integration",
+  "version": "0.1.0",
+  "displayName": "Aspire integration",
+  "description": "This package makes it possible to launch a unity project from your aspire host.",
+  "unity": "2019.1",
+  "unityRelease": "0b5",
+  "keywords": [],
+  "author": {
+    "name": "Bastien Olivier Dijkstra",
+    "email": "bastien@dutchskull.com",
+    "url": "https://www.dutchskull.com"
+  }
+}
