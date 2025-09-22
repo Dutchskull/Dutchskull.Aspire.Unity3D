@@ -27,16 +27,16 @@ public sealed class UnityHealthCheck : IHealthCheck
             client.Timeout = TimeSpan.FromSeconds(3);
 
             Uri url = new(_controlUrl, "health");
-            HttpResponseMessage resp = await client.GetAsync(url, cancellationToken).ConfigureAwait(false);
+            HttpResponseMessage response = await client.GetAsync(url, cancellationToken).ConfigureAwait(false);
 
-            if (resp.IsSuccessStatusCode)
+            if (response.IsSuccessStatusCode)
             {
-                _log.LogDebug("Unity control healthy: {Status}", resp.StatusCode);
+                _log.LogDebug("Unity control healthy: {Status}", response.StatusCode);
                 return HealthCheckResult.Healthy("Unity control OK");
             }
 
-            _log.LogWarning("Unity control unhealthy: {Status}", resp.StatusCode);
-            return HealthCheckResult.Unhealthy($"Status {resp.StatusCode}");
+            _log.LogWarning("Unity control unhealthy: {Status}", response.StatusCode);
+            return HealthCheckResult.Unhealthy($"Status {response.StatusCode}");
         }
         catch (Exception ex)
         {

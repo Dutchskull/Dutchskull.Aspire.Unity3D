@@ -26,19 +26,11 @@ MonoBehaviour:
     m_IsDefault: 1
     m_Capabilities: 7
     m_ConfigSource: 0
-  - m_Id: scoped:project:Nlr registry
-    m_Name: Nlr registry
-    m_Url: https://unity.nlr.nl
-    m_Scopes:
-    - nl.nlr
-    m_IsDefault: 0
-    m_Capabilities: 0
-    m_ConfigSource: 4
-  m_UserSelectedRegistryName: Nlr registry
+  m_UserSelectedRegistryName: 
   m_UserAddingNewScopedRegistry: 0
   m_RegistryInfoDraft:
     m_Modified: 0
     m_ErrorMessage: 
-    m_UserModificationsInstanceId: -852
-    m_OriginalInstanceId: -856
+    m_UserModificationsInstanceId: -830
+    m_OriginalInstanceId: -834
   m_LoadAssets: 0

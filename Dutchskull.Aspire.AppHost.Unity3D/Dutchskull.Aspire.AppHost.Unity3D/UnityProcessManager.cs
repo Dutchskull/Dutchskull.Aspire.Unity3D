@@ -14,7 +14,7 @@ public sealed class UnityProcessManager
             throw new FileNotFoundException("Unity editor not found", editorPath);
         }
 
-        string args = $"-projectPath \"{projectPath}\"";
+        string args = $"-projectPath \"{Path.GetFullPath(projectPath)}\"";
         ProcessStartInfo startInfo = new()
         {
             FileName = editorPath,
@@ -28,13 +28,13 @@ public sealed class UnityProcessManager
         return ProcessInstance;
     }
 
-    public static int FindEditorPidForProjectAsync(string projectPath)
+    public static Process? FindEditorProcessForProjectAsync(string projectPath)
     {
         projectPath = projectPath.Replace('/', Path.DirectorySeparatorChar).Trim('"');
 
         if (!OperatingSystem.IsWindows())
         {
-            return -1;
+            return null;
         }
 
         static string Escape(string s) => s.Replace("\\", "\\\\").Replace("%", "\\%").Replace("\"", "\\\"");
@@ -58,12 +58,12 @@ public sealed class UnityProcessManager
                      exePath.EndsWith("Unity.exe", StringComparison.OrdinalIgnoreCase) ||
                      exePath.Contains(Path.Combine("Editor", "Unity.exe"), StringComparison.OrdinalIgnoreCase)))
                 {
-                    return (int)pid;
+                    return Process.GetProcessById((int)pid); ;
                 }
             }
             catch { }
         }
 
-        return -1;
+        return null;
     }
 }

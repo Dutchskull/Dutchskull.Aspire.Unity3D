@@ -1,8 +1,11 @@
 ﻿using Aspire.Hosting.ApplicationModel;
 using Aspire.Hosting.Eventing;
 using Dutchskull.Aspire.Unity3D.Hosting;
+using Humanizer.Localisation;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Diagnostics.HealthChecks;
 using Microsoft.Extensions.Logging;
+using System.Diagnostics;
 
 #pragma warning disable IDE0130
 namespace Aspire.Hosting;
@@ -18,6 +21,8 @@ public static class UnityAspireExtensions
         string? customUnityInstallRoot = null)
     {
         ArgumentNullException.ThrowIfNull(builder);
+
+        projectPath = Path.GetFullPath(projectPath);
 
         if (string.IsNullOrWhiteSpace(name))
         {
@@ -42,6 +47,8 @@ public static class UnityAspireExtensions
 
         string healthCheckKey = $"{name}_check";
 
+        builder.Services.AddHttpClient();
+
         builder.Services.AddHealthChecks()
             .AddTypeActivatedCheck<UnityHealthCheck>(
                 healthCheckKey,
@@ -65,36 +72,57 @@ public static class UnityAspireExtensions
 
             using (log.BeginScope("UnityProject:{ResourceName}", resource.Name))
             {
-                await events.PublishAsync(new BeforeResourceStartedEvent(resource, services), cancellationToken);
+                await events.PublishAsync(new BeforeResourceStartedEvent(resource, services), cancellationToken).ConfigureAwait(false);
 
                 log.LogInformation("Initializing Unity project resource for {ProjectPath}", unityResource.ProjectPath);
 
-                int existingPid = UnityProcessManager.FindEditorPidForProjectAsync(unityResource.ProjectPath);
+                Process? existingUnityProcess = UnityProcessManager.FindEditorProcessForProjectAsync(unityResource.ProjectPath);
 
-                bool unityNotStarted = existingPid == -1;
+                bool unityNotStarted = existingUnityProcess is null;
+
                 if (unityNotStarted)
                 {
-                    processManager.StartEditor(unityResource.UnityExePath, unityResource.ProjectPath);
+                    existingUnityProcess = processManager.StartEditor(unityResource.UnityExePath, unityResource.ProjectPath);
                 }
+
+                existingUnityProcess!.Exited += async (sender, e) =>
+                {
+                    await notifications.PublishUpdateAsync(resource, s => s with
+                    {
+                        StartTimeStamp = DateTime.UtcNow,
+                        State = KnownResourceStates.Exited,
+                        ResourceType = "teste",
+                        Urls = [],
+                    }).ConfigureAwait(false);
+                };
 
                 await notifications.PublishUpdateAsync(resource, s => s with
                 {
                     StartTimeStamp = DateTime.UtcNow,
-                    State = KnownResourceStates.Starting
-                });
-            }
-        });
+                    State = KnownResourceStates.Starting,
+                }).ConfigureAwait(false);
 
-        unityBuilder.OnResourceReady(async (resource, resourceReadyEvent, cancellationToken) =>
-        {
-            ILogger log = resourceReadyEvent.Services.GetRequiredService<ILogger>();
-            ResourceNotificationService notifications = resourceReadyEvent.Services.GetRequiredService<ResourceNotificationService>();
+                TimeSpan pollInterval = TimeSpan.FromSeconds(10);
+                TimeSpan overallTimeout = TimeSpan.FromMinutes(5);
+                DateTime start = DateTime.UtcNow;
 
-            using (log.BeginScope("UnityProject:{ResourceName}", resource.Name))
-            {
+                HealthCheckService healthCheck = services.GetRequiredService<HealthCheckService>();
+
+                while (!cancellationToken.IsCancellationRequested && (DateTime.UtcNow - start) < overallTimeout)
+                {
+                    HealthReport health = await healthCheck.CheckHealthAsync(cancellationToken).ConfigureAwait(false);
+
+                    if (health.Status == HealthStatus.Healthy)
+                    {
+                        break;
+                    }
+
+                    await Task.Delay(pollInterval, cancellationToken).ConfigureAwait(false);
+                }
+
                 try
                 {
-                    bool runSucceeded = await controlClient.StartProjectAsync(unityResource.ControlUrl, cancellationToken);
+                    bool runSucceeded = await controlClient.StartProjectAsync(unityResource.ControlUrl, cancellationToken).ConfigureAwait(false);
 
                     if (runSucceeded)
                     {
@@ -102,8 +130,8 @@ public static class UnityAspireExtensions
                         {
                             StartTimeStamp = DateTime.UtcNow,
                             State = KnownResourceStates.Running,
-                            Urls = s.Urls.Add(new UrlSnapshot(unityResource.ControlUrl.ToString(), unityResource.ControlUrl.ToString(), true))
-                        });
+                            Urls = s.Urls.Add(new UrlSnapshot(unityResource.ControlUrl.ToString(), unityResource.ControlUrl.ToString(), false))
+                        }).ConfigureAwait(false);
                     }
                     else
                     {
@@ -111,7 +139,7 @@ public static class UnityAspireExtensions
                         {
                             StartTimeStamp = DateTime.UtcNow,
                             State = "StartedButRunFailed",
-                        });
+                        }).ConfigureAwait(false);
                     }
                 }
                 catch (Exception ex)
@@ -121,14 +149,14 @@ public static class UnityAspireExtensions
                     {
                         StartTimeStamp = DateTime.UtcNow,
                         State = "DetectedProcessButControlError"
-                    });
+                    }).ConfigureAwait(false);
                 }
             }
         });
 
-        Console.CancelKeyPress += async (_, ea) => await StopUnityAsync(unityResource, controlClient);
+        Console.CancelKeyPress += async (_, ea) => await StopUnityAsync(unityResource, controlClient).ConfigureAwait(false);
 
-        AppDomain.CurrentDomain.ProcessExit += async (_, _) => await StopUnityAsync(unityResource, controlClient);
+        AppDomain.CurrentDomain.ProcessExit += async (_, _) => await StopUnityAsync(unityResource, controlClient).ConfigureAwait(false);
 
         return unityBuilder;
     }

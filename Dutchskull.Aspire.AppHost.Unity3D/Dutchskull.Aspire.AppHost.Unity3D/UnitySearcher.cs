@@ -52,7 +52,7 @@ public static class UnityPathFinder
         {
             if (!string.IsNullOrWhiteSpace(customInstallRoot) && Directory.Exists(customInstallRoot))
             {
-                found = FindUnityInRoots(new[] { customInstallRoot }, unityVersion, MacUnityFileNames());
+                found = FindUnityInRoots([customInstallRoot], unityVersion, MacUnityFileNames());
                 if (found != null)
                 {
                     return found;
@@ -85,7 +85,7 @@ public static class UnityPathFinder
 
             if (!string.IsNullOrWhiteSpace(customInstallRoot) && Directory.Exists(customInstallRoot))
             {
-                found = FindUnityInRoots(new[] { customInstallRoot }, unityVersion, LinuxUnityFileNames());
+                found = FindUnityInRoots([customInstallRoot], unityVersion, LinuxUnityFileNames());
                 if (found != null)
                 {
                     return found;
