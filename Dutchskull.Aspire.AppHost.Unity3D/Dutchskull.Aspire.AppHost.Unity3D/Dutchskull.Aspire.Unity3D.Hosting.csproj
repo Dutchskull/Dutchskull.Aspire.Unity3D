@@ -4,10 +4,38 @@
 		<TargetFramework>net8.0</TargetFramework>
 		<ImplicitUsings>enable</ImplicitUsings>
 		<Nullable>enable</Nullable>
+
+		<PackageId>Dutchskull.Aspire.Unity</PackageId>
+		<Version>0.0.1</Version>
+		<Authors>Dutchskull</Authors>
+		<Description>A integration for unity3d in dotnet aspire.</Description>
+		<PackageTags>aspire unity3d example</PackageTags>
+		<PackageLicenseExpression>MIT</PackageLicenseExpression>
+		<RepositoryType>git</RepositoryType>
+		<RepositoryUrl>https://github.com/Dutchskull/Aspire.Unity3D</RepositoryUrl>
+		<ProjectUrl>https://github.com/Dutchskull/Aspire.Unity3D</ProjectUrl>
+
+		<PackageRequireLicenseAcceptance>false</PackageRequireLicenseAcceptance>
+
+		<PackageReadmeFile>docs\README.md</PackageReadmeFile>
+		<PackageIcon>docs\logo.jpg</PackageIcon>
 	</PropertyGroup>
 
 	<ItemGroup>
-		<PackageReference Include="Aspire.Hosting" Version="9.6.0-preview.1.25470.2" />
+		<Content Include="../../logo.jpg">
+			<Pack>true</Pack>
+			<PackagePath>docs/</PackagePath>
+			<Link>docs/logo.jpg</Link>
+		</Content>
+		<None Include="../../README.md">
+			<Pack>true</Pack>
+			<PackagePath>docs/</PackagePath>
+			<Link>docs/README.md</Link>
+		</None>
+	</ItemGroup>
+
+	<ItemGroup>
+		<PackageReference Include="Aspire.Hosting" Version="9.4.2" />
 		<PackageReference Include="System.Management" Version="10.0.0-rc.1.25451.107" />
 	</ItemGroup>
 
