@@ -1,0 +1,44 @@
+name: Publish NuGet Package
+
+on:
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: self-hosted
+
+    env:
+      DOTNET_INSTALL_DIR: "./.dotnet"
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up .NET
+        uses: actions/setup-dotnet@v3
+        with:
+          dotnet-version: "8.0.x"
+
+      - name: Install GitVersion
+        uses: gittools/actions/gitversion/setup@v2.0.1
+        with:
+          versionSpec: "6.x"
+
+      - name: Determine Version
+        uses: gittools/actions/gitversion/execute@v2.0.1
+
+      - name: Restore dependencies
+        run: dotnet restore Dutchskull.Aspire.AppHost.Unity3D\Dutchskull.Aspire.AppHost.Unity3D\Dutchskull.Aspire.Unity3D.Hosting.csproj
+
+      - name: Build
+        run: dotnet build Dutchskull.Aspire.AppHost.Unity3D\Dutchskull.Aspire.AppHost.Unity3D\Dutchskull.Aspire.Unity3D.Hosting.csproj --configuration Release --no-restore
+
+      - name: Pack
+        run: dotnet pack Dutchskull.Aspire.AppHost.Unity3D\Dutchskull.Aspire.AppHost.Unity3D\Dutchskull.Aspire.Unity3D.Hosting.csproj --configuration Release --no-restore --output ./nupkg /p:Version=${{ env.fullSemVer  }}
+
+      - name: Publish to NuGet
+        run: dotnet nuget push ./nupkg/*.nupkg --source https://api.nuget.org/v3/index.json --api-key ${{ secrets.NUGET_API_KEY }}
+        env:
+          NUGET_API_KEY: ${{ secrets.NUGET_API_KEY }}
