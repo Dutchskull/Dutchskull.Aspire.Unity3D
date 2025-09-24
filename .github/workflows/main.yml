@@ -28,6 +28,9 @@ jobs:
 
       - name: Determine Version
         uses: gittools/actions/gitversion/execute@v2.0.1
+        with:
+          overrideConfig: |
+            next-version=0.1.0
 
       - name: Restore dependencies
         run: dotnet restore Dutchskull.Aspire.AppHost.Unity3D/Dutchskull.Aspire.AppHost.Unity3D/Dutchskull.Aspire.Unity3D.Hosting.csproj
