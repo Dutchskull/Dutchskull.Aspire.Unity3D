@@ -18,15 +18,9 @@
 		<PackageRequireLicenseAcceptance>false</PackageRequireLicenseAcceptance>
 
 		<PackageReadmeFile>docs\README.md</PackageReadmeFile>
-		<PackageIcon>docs\logo.jpg</PackageIcon>
 	</PropertyGroup>
 
 	<ItemGroup>
-		<Content Include="../../logo.jpg">
-			<Pack>true</Pack>
-			<PackagePath>docs/</PackagePath>
-			<Link>docs/logo.jpg</Link>
-		</Content>
 		<None Include="../../README.md">
 			<Pack>true</Pack>
 			<PackagePath>docs/</PackagePath>
