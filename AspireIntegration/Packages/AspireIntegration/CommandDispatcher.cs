@@ -14,11 +14,8 @@ internal class CommandDispatcher : ICommandDispatcher
 
     public string Dispatch(string command, string arg)
     {
-        if (string.IsNullOrWhiteSpace(command))
-        {
-            return "error:empty_command";
-        }
-
-        return commands.TryGetValue(command, out ICommand cmd) ? cmd.Execute(arg) : defaultCommand.Execute(arg);
+        return string.IsNullOrWhiteSpace(command)
+            ? "error:empty_command"
+            : commands.TryGetValue(command, out ICommand cmd) ? cmd.Execute(arg) : defaultCommand.Execute(arg);
     }
 }

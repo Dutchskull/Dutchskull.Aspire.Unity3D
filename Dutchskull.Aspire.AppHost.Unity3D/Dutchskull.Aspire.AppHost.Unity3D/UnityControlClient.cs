@@ -20,16 +20,21 @@ public sealed class UnityControlClient : IDisposable
         return res.IsSuccessStatusCode;
     }
 
-    public async Task<bool> StartProjectAsync(Uri baseUrl, CancellationToken cancellationToken = default)
+    public async Task<bool> StartProjectAsync(Uri baseUrl, string? scene = null, CancellationToken cancellationToken = default)
     {
-        Uri url = new(baseUrl, "start");
-        StringContent content = new(JsonSerializer.Serialize(new { }), Encoding.UTF8, "application/json");
+        string sceneValue = scene ?? "-1";
+        string relativePath = $"start/{Uri.EscapeDataString(sceneValue)}";
+        Uri url = new(baseUrl, relativePath);
+        StringContent content = new(string.Empty, Encoding.UTF8, "application/json");
         try
         {
-            using HttpResponseMessage res = await _http.PostAsync(url, content, cancellationToken).ConfigureAwait(false);
-            return res.IsSuccessStatusCode;
+            using HttpResponseMessage response = await _http.PostAsync(url, content, cancellationToken).ConfigureAwait(false);
+            return response.IsSuccessStatusCode;
         }
-        catch { return false; }
+        catch
+        {
+            return false;
+        }
     }
 
     public async Task<bool> StopProjectAsync(Uri baseUrl, CancellationToken cancellationToken = default)

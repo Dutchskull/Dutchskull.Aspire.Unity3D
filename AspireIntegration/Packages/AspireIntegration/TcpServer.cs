@@ -104,7 +104,7 @@ internal class TcpServer : IDisposable
             return;
         }
 
-        (string cmd, string arg) = IsHttpRequest(request) ? ParseHttpCommand(request) : ParsePlainCommand(request);
+        (string cmd, string arg) = ParseHttpCommand(request);
         string responseBody = DispatchOnMainThread(cmd, arg);
 
         string http = "HTTP/1.1 200 OK\r\n" +
@@ -118,7 +118,7 @@ internal class TcpServer : IDisposable
     private string DispatchOnMainThread(string cmd, string arg, int timeoutMs = 2000)
     {
         string result = null;
-        using var done = new ManualResetEventSlim(false);
+        using ManualResetEventSlim done = new ManualResetEventSlim(false);
 
         void Callback()
         {
@@ -150,30 +150,10 @@ internal class TcpServer : IDisposable
         return result ?? string.Empty;
     }
 
-    private static bool IsHttpRequest(string request)
-    {
-        return request.StartsWith("GET ", StringComparison.OrdinalIgnoreCase) ||
-               request.StartsWith("POST ", StringComparison.OrdinalIgnoreCase);
-    }
-
-    private static (string command, string arg) ParsePlainCommand(string request)
-    {
-        string raw = request.Trim();
-        int idx = raw.IndexOf(' ');
-        if (idx >= 0)
-        {
-            string cmd = raw.Substring(0, idx).ToLowerInvariant();
-            string arg = raw.Substring(idx + 1);
-            return (cmd, arg);
-        }
-
-        return (raw.ToLowerInvariant(), string.Empty);
-    }
-
     private static (string command, string arg) ParseHttpCommand(string request)
     {
-        using StringReader sr = new(request);
-        string line = sr.ReadLine();
+        using StringReader stringReader = new(request);
+        string line = stringReader.ReadLine();
         if (string.IsNullOrEmpty(line))
         {
             return ("status", string.Empty);
