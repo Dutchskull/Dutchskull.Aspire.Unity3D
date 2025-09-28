@@ -16,17 +16,17 @@ public static class UnityAspireExtensions
     this IDistributedApplicationBuilder builder,
     string name,
     string projectPath,
-    int? scene = null,
+    int? sceneIndex = null,
     string url = "http://127.0.0.1",
     int port = 54021,
     string? customUnityInstallRoot = null) =>
-        builder.AddUnityProject(name, projectPath, scene.ToString(), url, port, customUnityInstallRoot);
+        builder.AddUnityProject(name, projectPath, sceneIndex.ToString(), url, port, customUnityInstallRoot);
 
     public static IResourceBuilder<UnityProjectResource> AddUnityProject(
         this IDistributedApplicationBuilder builder,
         string name,
         string projectPath,
-        string? scene = null,
+        string? sceneName = null,
         string url = "http://127.0.0.1",
         int port = 54021,
         string? customUnityInstallRoot = null)
@@ -133,7 +133,7 @@ public static class UnityAspireExtensions
 
                 try
                 {
-                    bool runSucceeded = await controlClient.StartProjectAsync(unityResource.ControlUrl, scene, cancellationToken).ConfigureAwait(false);
+                    bool runSucceeded = await controlClient.StartProjectAsync(unityResource.ControlUrl, sceneName, cancellationToken).ConfigureAwait(false);
 
                     if (runSucceeded)
                     {

@@ -62,11 +62,22 @@ public static IResourceBuilder<UnityProjectResource> AddUnityProject(
     this IDistributedApplicationBuilder builder,
     string name,
     string projectPath,
+    int? sceneIndex = null,
     string url = "http://127.0.0.1",
     int port = 54021,
-    string? customUnityInstallRoot = null)
+    string? customUnityInstallRoot = null) {...}
+
+public static IResourceBuilder<UnityProjectResource> AddUnityProject(
+    this IDistributedApplicationBuilder builder,
+    string name,
+    string projectPath,
+    string? sceneName = null,
+    string url = "http://127.0.0.1",
+    int port = 54021,
+    string? customUnityInstallRoot = null) {...}
 ```
 
+* **`sceneName/sceneIndex`** → You can pass the scene index or name that should be playing in unity when starting the AppHost. Make sure it exists in the build settings.
 * **`url`** → The base URL where the Unity project will be hosted (default: `http://127.0.0.1`) (Not supported to change yet).
 * **`port`** → The port Unity should listen on (default: `54021`) (Not supported to change yet).
 * **`customUnityInstallRoot`** → (optional) Path to a custom Unity installation if you don’t want to use the default Unity install.
