@@ -13,9 +13,20 @@ namespace Aspire.Hosting;
 public static class UnityAspireExtensions
 {
     public static IResourceBuilder<UnityProjectResource> AddUnityProject(
+    this IDistributedApplicationBuilder builder,
+    string name,
+    string projectPath,
+    int? sceneIndex = null,
+    string url = "http://127.0.0.1",
+    int port = 54021,
+    string? customUnityInstallRoot = null) =>
+        builder.AddUnityProject(name, projectPath, sceneIndex.ToString(), url, port, customUnityInstallRoot);
+
+    public static IResourceBuilder<UnityProjectResource> AddUnityProject(
         this IDistributedApplicationBuilder builder,
         string name,
         string projectPath,
+        string? sceneName = null,
         string url = "http://127.0.0.1",
         int port = 54021,
         string? customUnityInstallRoot = null)
@@ -122,7 +133,7 @@ public static class UnityAspireExtensions
 
                 try
                 {
-                    bool runSucceeded = await controlClient.StartProjectAsync(unityResource.ControlUrl, cancellationToken).ConfigureAwait(false);
+                    bool runSucceeded = await controlClient.StartProjectAsync(unityResource.ControlUrl, sceneName, cancellationToken).ConfigureAwait(false);
 
                     if (runSucceeded)
                     {
