@@ -118,7 +118,8 @@ public static class UnityAspireExtensions
                 );
             }
 
-            existingUnityProcess!.Exited += async (sender, e) =>
+            existingUnityProcess!.EnableRaisingEvents = true;
+            existingUnityProcess.Exited += async (sender, e) =>
             {
                 await notifications
                     .PublishUpdateAsync(
