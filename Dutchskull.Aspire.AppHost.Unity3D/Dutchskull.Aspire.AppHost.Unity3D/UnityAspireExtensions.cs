@@ -62,20 +62,27 @@ public static class UnityAspireExtensions
 
         UnityProjectResource unityResource = new(name, editorPath, projectPath, controlUrl);
 
-        string healthCheckKey = $"{name}_check";
+        string healthCheckEditorKey = $"{name}_editor_check";
+        string healthCheckPlaymodeKey = $"{name}_playmode_check";
 
         builder.Services.AddHttpClient();
 
-        builder.Services.AddHealthChecks()
-            .AddTypeActivatedCheck<UnityHealthCheck>(
-                healthCheckKey,
+        builder
+            .Services.AddHealthChecks()
+            .AddTypeActivatedCheck<UnityEditorHealthCheck>(
+                healthCheckEditorKey,
+                args: [controlUrl]
+            )
+            .AddTypeActivatedCheck<UnityPlaymodeHealthCheck>(
+                healthCheckPlaymodeKey,
                 args: [controlUrl]
             );
 
         IResourceBuilder<UnityProjectResource> unityBuilder = builder
             .AddResource(unityResource)
             .ExcludeFromManifest()
-            .WithHealthCheck(healthCheckKey);
+            .WithHealthCheck(healthCheckEditorKey)
+            .WithHealthCheck(healthCheckPlaymodeKey);
 
         UnityProcessManager processManager = new();
         UnityControlClient controlClient = new();

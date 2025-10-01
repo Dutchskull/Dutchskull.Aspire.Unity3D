@@ -3,13 +3,13 @@ using Microsoft.Extensions.Logging;
 
 namespace Dutchskull.Aspire.Unity3D.Hosting;
 
-public sealed class UnityHealthCheck : IHealthCheck
+public sealed class UnityEditorHealthCheck : IHealthCheck
 {
     private readonly Uri _controlUrl;
-    private readonly ILogger<UnityHealthCheck> _log;
+    private readonly ILogger<UnityEditorHealthCheck> _log;
     private readonly IHttpClientFactory _httpFactory;
 
-    public UnityHealthCheck(ILogger<UnityHealthCheck> log, IHttpClientFactory httpFactory, Uri controlUrl)
+    public UnityEditorHealthCheck(ILogger<UnityEditorHealthCheck> log, IHttpClientFactory httpFactory, Uri controlUrl)
     {
         _log = log ?? throw new ArgumentNullException(nameof(log));
         _httpFactory = httpFactory ?? throw new ArgumentNullException(nameof(httpFactory));
@@ -26,7 +26,7 @@ public sealed class UnityHealthCheck : IHealthCheck
             HttpClient client = _httpFactory.CreateClient();
             client.Timeout = TimeSpan.FromSeconds(3);
 
-            Uri url = new(_controlUrl, "health");
+            Uri url = new(_controlUrl, "editor-health");
             HttpResponseMessage response = await client.GetAsync(url, cancellationToken).ConfigureAwait(false);
 
             if (response.IsSuccessStatusCode)
