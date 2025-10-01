@@ -12,11 +12,17 @@ namespace Aspire.Hosting;
 
 public static class UnityAspireExtensions
 {
+	public static IResourceBuilder<UnityProjectResource> AddUnityProject(
+		this IDistributedApplicationBuilder builder,
+		string name,
+		string projectPath
+		) => AddUnityProject(builder, name, projectPath, -1); 
+	
     public static IResourceBuilder<UnityProjectResource> AddUnityProject(
     this IDistributedApplicationBuilder builder,
     string name,
     string projectPath,
-    int? sceneIndex = null,
+    int sceneIndex,
     string url = "http://127.0.0.1",
     int port = 54021,
     string? customUnityInstallRoot = null) =>
@@ -26,7 +32,7 @@ public static class UnityAspireExtensions
         this IDistributedApplicationBuilder builder,
         string name,
         string projectPath,
-        string? sceneName = null,
+        string sceneName,
         string url = "http://127.0.0.1",
         int port = 54021,
         string? customUnityInstallRoot = null)
