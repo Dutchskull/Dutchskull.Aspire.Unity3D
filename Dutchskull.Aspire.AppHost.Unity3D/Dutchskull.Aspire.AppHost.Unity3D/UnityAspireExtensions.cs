@@ -301,7 +301,6 @@ public static class UnityAspireExtensions
         bool showWhenExited = false
     )
     {
-        return context.ResourceSnapshot.HealthStatus == visibleHealthStatus
         return context.ResourceSnapshot.HealthStatus == visibleHealthStatus ||
                (showWhenExited && context.ResourceSnapshot.State == KnownResourceStates.Exited)
             ? ResourceCommandState.Enabled
