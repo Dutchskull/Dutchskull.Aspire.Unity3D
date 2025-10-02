@@ -256,7 +256,7 @@ public static class UnityAspireExtensions
                         context.ServiceProvider,
                         context.CancellationToken
                     )
-                    .ConfigureAwait(false);
+                    .ConfigureAwait(true);
 
                 return new ExecuteCommandResult { Success = true };
             },
@@ -264,7 +264,7 @@ public static class UnityAspireExtensions
             {
                 IconName = "Play",
                 IconVariant = IconVariant.Filled,
-                UpdateState = context => OnUpdateResourceState(context, HealthStatus.Unhealthy),
+                UpdateState = context => OnUpdateResourceState(context, HealthStatus.Unhealthy, true),
                 IsHighlighted = true
             }
         );
@@ -274,7 +274,7 @@ public static class UnityAspireExtensions
             "Stop Unity",
             async _ =>
             {
-                await StopUnityAsync(unityResource, controlClient).ConfigureAwait(false);
+                await StopUnityAsync(unityResource, controlClient).ConfigureAwait(true);
                 return new ExecuteCommandResult { Success = true };
             },
             new CommandOptions
@@ -297,10 +297,13 @@ public static class UnityAspireExtensions
 
     private static ResourceCommandState OnUpdateResourceState(
         UpdateCommandStateContext context,
-        HealthStatus? visibleHealthStatus
+        HealthStatus? visibleHealthStatus,
+        bool showWhenExited = false
     )
     {
         return context.ResourceSnapshot.HealthStatus == visibleHealthStatus
+        return context.ResourceSnapshot.HealthStatus == visibleHealthStatus ||
+               (showWhenExited && context.ResourceSnapshot.State == KnownResourceStates.Exited)
             ? ResourceCommandState.Enabled
             : ResourceCommandState.Hidden;
     }
