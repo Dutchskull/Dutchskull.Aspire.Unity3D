@@ -1,8 +1,9 @@
-﻿using Aspire.Hosting.ApplicationModel;
+﻿using Aspire.Hosting;
+using Aspire.Hosting.ApplicationModel;
 
 namespace Dutchskull.Aspire.Unity3D.Hosting;
 
-public sealed class UnityProjectResource : Resource, IResourceWithEndpoints
+public sealed class UnityProjectResource : Resource, IResourceWithEnvironment, IResourceWithArgs, IResourceWithServiceDiscovery, IResourceWithWaitSupport
 {
     public UnityProjectResource(string name, string unityExePath, string projectPath, Uri controlUrl)
         : base(name)
@@ -13,6 +14,8 @@ public sealed class UnityProjectResource : Resource, IResourceWithEndpoints
     }
 
     public Uri ControlUrl { get; }
+
     public string ProjectPath { get; }
+
     public string UnityExePath { get; }
 }

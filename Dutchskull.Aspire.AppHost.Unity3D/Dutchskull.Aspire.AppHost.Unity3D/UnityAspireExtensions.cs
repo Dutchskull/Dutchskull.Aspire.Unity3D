@@ -1,11 +1,12 @@
 ﻿using Aspire.Hosting.ApplicationModel;
 using Aspire.Hosting.Eventing;
 using Dutchskull.Aspire.Unity3D.Hosting;
-using Humanizer.Localisation;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Diagnostics.HealthChecks;
+using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using System.Diagnostics;
+using System.Threading;
 
 #pragma warning disable IDE0130
 namespace Aspire.Hosting;
@@ -32,7 +33,6 @@ public static class UnityAspireExtensions
         string? customUnityInstallRoot = null)
     {
         ArgumentNullException.ThrowIfNull(builder);
-
         projectPath = Path.GetFullPath(projectPath);
 
         if (string.IsNullOrWhiteSpace(name))
@@ -60,6 +60,17 @@ public static class UnityAspireExtensions
 
         builder.Services.AddHttpClient();
 
+        builder.Services.AddHostedService(serviceProvider =>
+            new UnityShutdownService(
+                serviceProvider.GetRequiredService<IHostApplicationLifetime>(),
+                serviceProvider.GetRequiredService<ILogger<UnityShutdownService>>(),
+                unityResource,
+                serviceProvider.GetRequiredService<UnityControlClient>())
+        );
+
+        builder.Services.AddSingleton<UnityProcessManager>();
+        builder.Services.AddSingleton<UnityControlClient>();
+
         builder.Services.AddHealthChecks()
             .AddTypeActivatedCheck<UnityHealthCheck>(
                 healthCheckKey,
@@ -71,8 +82,6 @@ public static class UnityAspireExtensions
             .ExcludeFromManifest()
             .WithHealthCheck(healthCheckKey);
 
-        UnityProcessManager processManager = new();
-        UnityControlClient controlClient = new();
 
         unityBuilder.OnInitializeResource(async (resource, initEvent, cancellationToken) =>
         {
@@ -80,6 +89,9 @@ public static class UnityAspireExtensions
             IDistributedApplicationEventing events = initEvent.Eventing;
             ResourceNotificationService notifications = initEvent.Notifications;
             IServiceProvider services = initEvent.Services;
+
+            UnityProcessManager processManager = services.GetRequiredService<UnityProcessManager>();
+            UnityControlClient controlClient = services.GetRequiredService<UnityControlClient>();
 
             using (log.BeginScope("UnityProject:{ResourceName}", resource.Name))
             {
@@ -102,7 +114,6 @@ public static class UnityAspireExtensions
                     {
                         StartTimeStamp = DateTime.UtcNow,
                         State = KnownResourceStates.Exited,
-                        ResourceType = "teste",
                         Urls = [],
                     }).ConfigureAwait(false);
                 };
@@ -163,11 +174,11 @@ public static class UnityAspireExtensions
                     }).ConfigureAwait(false);
                 }
             }
+
+            Console.CancelKeyPress += async (_, _) => await StopUnityAsync(unityResource, controlClient).ConfigureAwait(false);
+
+            AppDomain.CurrentDomain.ProcessExit += async (_, _) => await StopUnityAsync(unityResource, controlClient).ConfigureAwait(false);
         });
-
-        Console.CancelKeyPress += async (_, ea) => await StopUnityAsync(unityResource, controlClient).ConfigureAwait(false);
-
-        AppDomain.CurrentDomain.ProcessExit += async (_, _) => await StopUnityAsync(unityResource, controlClient).ConfigureAwait(false);
 
         return unityBuilder;
     }
