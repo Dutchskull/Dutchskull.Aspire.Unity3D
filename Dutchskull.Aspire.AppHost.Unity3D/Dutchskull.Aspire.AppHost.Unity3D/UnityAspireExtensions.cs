@@ -264,7 +264,13 @@ public static class UnityAspireExtensions
             {
                 IconName = "Play",
                 IconVariant = IconVariant.Filled,
-                UpdateState = context => OnUpdateResourceState(context, HealthStatus.Unhealthy, true),
+                UpdateState = context => OnUpdateResourceState(context, HealthStatus.Unhealthy,
+                [
+                    KnownResourceStates.Exited,
+                    KnownResourceStates.FailedToStart,
+                    KnownResourceStates.RuntimeUnhealthy,
+                    KnownResourceStates.Finished
+                ]),
                 IsHighlighted = true
             }
         );
@@ -298,11 +304,11 @@ public static class UnityAspireExtensions
     private static ResourceCommandState OnUpdateResourceState(
         UpdateCommandStateContext context,
         HealthStatus? visibleHealthStatus,
-        bool showWhenExited = false
+        ResourceStateSnapshot[]? showForState = null
     )
     {
         return context.ResourceSnapshot.HealthStatus == visibleHealthStatus ||
-               (showWhenExited && context.ResourceSnapshot.State == KnownResourceStates.Exited)
+               (showForState is not null && showForState.Contains(context.ResourceSnapshot.State))
             ? ResourceCommandState.Enabled
             : ResourceCommandState.Hidden;
     }
