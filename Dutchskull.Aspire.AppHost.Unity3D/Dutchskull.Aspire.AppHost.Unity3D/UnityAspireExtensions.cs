@@ -1,11 +1,9 @@
-﻿using Aspire.Hosting.ApplicationModel;
-using Aspire.Hosting.Eventing;
+﻿using System.Diagnostics;
+using Aspire.Hosting.ApplicationModel;
 using Dutchskull.Aspire.Unity3D.Hosting;
-using Humanizer.Localisation;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Diagnostics.HealthChecks;
 using Microsoft.Extensions.Logging;
-using System.Diagnostics;
 
 #pragma warning disable IDE0130
 namespace Aspire.Hosting;
@@ -278,9 +276,14 @@ public static class UnityAspireExtensions
         unityBuilder.WithCommand(
             "resource-stop",
             "Stop Unity",
-            async _ =>
+            async context =>
             {
+                var notificationService = context.ServiceProvider.GetRequiredService<ResourceNotificationService>();
+
+                notificationService?.PublishUpdateAsync(unityResource, s => s with { State = KnownResourceStates.Stopping });
                 await StopUnityAsync(unityResource, controlClient).ConfigureAwait(true);
+                notificationService?.PublishUpdateAsync(unityResource, s => s with { State = KnownResourceStates.Finished });
+
                 return new ExecuteCommandResult { Success = true };
             },
             new CommandOptions
