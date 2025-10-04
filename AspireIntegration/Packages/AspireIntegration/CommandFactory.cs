@@ -12,7 +12,8 @@ internal static class CommandFactory
             ["toggle"] = new ToggleCommand(),
             ["status"] = new StatusCommand(),
             ["editor-health"] = new EditorHealthCommand(),
-            ["playmode-health"] = new PlayModeHealthCommand()
+            ["playmode-health"] = new PlayModeHealthCommand(),
+            ["config"] = new ConfigCommand()
         };
 
         UnknownCommand unknown = new();

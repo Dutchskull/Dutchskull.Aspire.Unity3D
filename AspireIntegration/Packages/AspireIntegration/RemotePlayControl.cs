@@ -17,23 +17,6 @@ public static class RemotePlayControl
         AssemblyReloadEvents.afterAssemblyReload += OnAfterAssemblyReload;
     }
 
-    private static void CreateAndStartServer()
-    {
-        DisposeServer();
-        server = new TcpServer(IPAddress.Loopback, Port, CommandFactory.Create());
-        server.Start();
-    }
-
-    private static void OnBeforeAssemblyReload()
-    {
-        DisposeServer();
-    }
-
-    private static void OnAfterAssemblyReload()
-    {
-        CreateAndStartServer();
-    }
-
     public static void DisposeServer()
     {
         try
@@ -48,5 +31,22 @@ public static class RemotePlayControl
         {
             server = null;
         }
+    }
+
+    private static void CreateAndStartServer()
+    {
+        DisposeServer();
+        server = new TcpServer(IPAddress.Loopback, Port, CommandFactory.Create());
+        server.Start();
+    }
+
+    private static void OnAfterAssemblyReload()
+    {
+        CreateAndStartServer();
+    }
+
+    private static void OnBeforeAssemblyReload()
+    {
+        DisposeServer();
     }
 }

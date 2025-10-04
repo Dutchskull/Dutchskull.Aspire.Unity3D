@@ -9,19 +9,30 @@ using UnityEngine;
 
 internal class TcpServer : IDisposable
 {
+    private readonly ICommandDispatcher dispatcher;
     private readonly IPAddress ip;
     private readonly int port;
-    private readonly ICommandDispatcher dispatcher;
-    private Thread listenerThread;
-    private TcpListener listener;
-    private volatile bool running;
     private bool disposed;
+    private TcpListener listener;
+    private Thread listenerThread;
+    private volatile bool running;
 
     public TcpServer(IPAddress ip, int port, ICommandDispatcher dispatcher)
     {
         this.ip = ip ?? throw new ArgumentNullException(nameof(ip));
         this.port = port;
         this.dispatcher = dispatcher ?? throw new ArgumentNullException(nameof(dispatcher));
+    }
+
+    ~TcpServer()
+    {
+        Dispose(false);
+    }
+
+    public void Dispose()
+    {
+        Dispose(true);
+        GC.SuppressFinalize(this);
     }
 
     public void Start()
@@ -47,107 +58,6 @@ internal class TcpServer : IDisposable
         running = false;
         try { listener?.Stop(); } catch { }
         try { listenerThread?.Join(500); } catch { }
-    }
-
-    private void ListenerLoop()
-    {
-        try
-        {
-            listener = new TcpListener(ip, port);
-            listener.Start();
-        }
-        catch (Exception e)
-        {
-            Debug.LogError($"[RemotePlayControl] Failed to start listener: {e}");
-            running = false;
-            throw e;
-        }
-
-        while (running)
-        {
-            try
-            {
-                if (!listener.Pending())
-                {
-                    Thread.Sleep(100);
-                    continue;
-                }
-
-                using TcpClient client = listener.AcceptTcpClient();
-                using NetworkStream stream = client.GetStream();
-                client.ReceiveTimeout = 2000;
-                client.SendTimeout = 2000;
-
-                ListenerLoopBody(stream);
-            }
-            catch (SocketException ex)
-            {
-                Debug.LogError($"[RemotePlayControl] Socket exception: {ex}");
-                throw ex;
-            }
-            catch (Exception ex)
-            {
-                Debug.LogError($"[RemotePlayControl] Listener exception: {ex}");
-                throw ex;
-            }
-        }
-
-        try { listener?.Stop(); } catch { }
-    }
-
-    private void ListenerLoopBody(NetworkStream stream)
-    {
-        string request = ReadStringFromStream(stream);
-        if (string.IsNullOrEmpty(request))
-        {
-            WriteStringToStream(stream, "error:empty_request");
-            return;
-        }
-
-        (string cmd, string arg) = ParseHttpCommand(request);
-        string responseBody = DispatchOnMainThread(cmd, arg);
-
-        string http = "HTTP/1.1 200 OK\r\n" +
-                      "Content-Type: text/plain; charset=utf-8\r\n" +
-                      $"Content-Length: {Encoding.UTF8.GetByteCount(responseBody)}\r\n" +
-                      "Connection: close\r\n\r\n" +
-                      responseBody;
-        WriteStringToStream(stream, http);
-    }
-
-    private string DispatchOnMainThread(string cmd, string arg, int timeoutMs = 2000)
-    {
-        string result = null;
-        using ManualResetEventSlim done = new ManualResetEventSlim(false);
-
-        void Callback()
-        {
-            try
-            {
-                result = dispatcher.Dispatch(cmd, arg);
-            }
-            catch (Exception ex)
-            {
-                Debug.LogError($"[RemotePlayControl] Command execution error: {ex}");
-                result = "error:command_exception";
-            }
-            finally
-            {
-                done.Set();
-                EditorApplication.update -= Callback;
-            }
-        }
-
-        EditorApplication.update += Callback;
-
-        if (!done.Wait(timeoutMs))
-        {
-            EditorApplication.update -= Callback;
-            Debug.LogWarning($"[RemotePlayControl] Command timeout for '{cmd}'");
-            return "error:timeout";
-        }
-
-        return result ?? string.Empty;
     }
 
     private static (string command, string arg) ParseHttpCommand(string request)
@@ -244,10 +154,39 @@ internal class TcpServer : IDisposable
         }
     }
 
-    public void Dispose()
+    private string DispatchOnMainThread(string cmd, string arg, int timeoutMs = 2000)
     {
-        Dispose(true);
-        GC.SuppressFinalize(this);
+        string result = null;
+        using ManualResetEventSlim done = new(false);
+
+        void Callback()
+        {
+            try
+            {
+                result = dispatcher.Dispatch(cmd, arg);
+            }
+            catch (Exception ex)
+            {
+                Debug.LogError($"[RemotePlayControl] Command execution error: {ex}");
+                result = "error:command_exception";
+            }
+            finally
+            {
+                done.Set();
+                EditorApplication.update -= Callback;
+            }
+        }
+
+        EditorApplication.update += Callback;
+
+        if (!done.Wait(timeoutMs))
+        {
+            EditorApplication.update -= Callback;
+            Debug.LogWarning($"[RemotePlayControl] Command timeout for '{cmd}'");
+            return "error:timeout";
+        }
+
+        return result ?? string.Empty;
     }
 
     private void Dispose(bool disposing)
@@ -277,8 +216,76 @@ internal class TcpServer : IDisposable
         }
     }
 
-    ~TcpServer()
+    private void ListenerLoop()
     {
-        Dispose(false);
+        try
+        {
+            listener = new TcpListener(ip, port);
+            listener.Start();
+        }
+        catch (Exception e)
+        {
+            Debug.LogError($"[RemotePlayControl] Failed to start listener: {e}");
+            running = false;
+            throw e;
+        }
+
+        while (running)
+        {
+            try
+            {
+                if (!listener.Pending())
+                {
+                    Thread.Sleep(100);
+                    continue;
+                }
+
+                using TcpClient client = listener.AcceptTcpClient();
+                using NetworkStream stream = client.GetStream();
+                client.ReceiveTimeout = 2000;
+                client.SendTimeout = 2000;
+
+                ListenerLoopBody(stream);
+            }
+            catch (SocketException ex)
+            {
+                Debug.LogError($"[RemotePlayControl] Socket exception: {ex}");
+                throw ex;
+            }
+            catch (Exception ex)
+            {
+                Debug.LogError($"[RemotePlayControl] Listener exception: {ex}");
+                throw ex;
+            }
+        }
+
+        try { listener?.Stop(); } catch { }
+    }
+
+    private void ListenerLoopBody(NetworkStream stream)
+    {
+        string request = ReadStringFromStream(stream);
+        if (string.IsNullOrEmpty(request))
+        {
+            WriteStringToStream(stream, "HTTP/1.1 400 Bad Request\r\nContent-Type: text/plain\r\nContent-Length: 0\r\n\r\n");
+            return;
+        }
+
+        (string cmd, string arg) = ParseHttpCommand(request);
+
+        int headerEnd = request.IndexOf("\r\n\r\n", StringComparison.Ordinal);
+        string body = headerEnd >= 0 && headerEnd + 4 < request.Length ? request.Substring(headerEnd + 4) : string.Empty;
+
+        string dispatchArg = string.IsNullOrWhiteSpace(body) ? arg : body;
+
+        string responseBody = DispatchOnMainThread(cmd, dispatchArg);
+
+        string httpResponse = "HTTP/1.1 200 OK\r\n" +
+                              "Content-Type: text/plain; charset=utf-8\r\n" +
+                              $"Content-Length: {Encoding.UTF8.GetByteCount(responseBody)}\r\n" +
+                              "Connection: close\r\n\r\n" +
+                              responseBody;
+
+        WriteStringToStream(stream, httpResponse);
     }
 }
