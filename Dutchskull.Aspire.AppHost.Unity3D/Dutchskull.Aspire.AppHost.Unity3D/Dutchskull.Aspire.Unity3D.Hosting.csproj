@@ -1,10 +1,6 @@
-﻿<Project Sdk="Microsoft.NET.Sdk">
+<Project Sdk="Microsoft.NET.Sdk">
 
 	<PropertyGroup>
-		<TargetFramework>net9.0</TargetFramework>
-		<ImplicitUsings>enable</ImplicitUsings>
-		<Nullable>enable</Nullable>
-
 		<PackageId>Dutchskull.Aspire.Unity</PackageId>
 		<Version>0.0.1</Version>
 		<Authors>Dutchskull</Authors>
@@ -29,8 +25,8 @@
 	</ItemGroup>
 
 	<ItemGroup>
-		<PackageReference Include="Aspire.Hosting" Version="9.5.1" />
-		<PackageReference Include="System.Management" Version="10.0.0-rc.1.25451.107" />
+		<PackageReference Include="Aspire.Hosting" />
+		<PackageReference Include="System.Management" />
 	</ItemGroup>
 
 </Project>
