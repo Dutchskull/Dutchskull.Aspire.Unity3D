@@ -6,25 +6,26 @@ using Microsoft.Extensions.Diagnostics.HealthChecks;
 using Microsoft.Extensions.Logging;
 
 #pragma warning disable IDE0130
+
 namespace Aspire.Hosting;
 
 public static class UnityAspireExtensions
 {
-	public static IResourceBuilder<UnityProjectResource> AddUnityProject(
-		this IDistributedApplicationBuilder builder,
-		string name,
-		string projectPath
-		) => AddUnityProject(builder, name, projectPath, -1); 
-	
     public static IResourceBuilder<UnityProjectResource> AddUnityProject(
-    this IDistributedApplicationBuilder builder,
-    string name,
-    string projectPath,
-    int sceneIndex,
-    string url = "http://127.0.0.1",
-    int port = 54021,
-    string? customUnityInstallRoot = null) =>
-        builder.AddUnityProject(name, projectPath, sceneIndex.ToString(), url, port, customUnityInstallRoot);
+        this IDistributedApplicationBuilder builder,
+        string name,
+        string projectPath) =>
+            AddUnityProject(builder, name, projectPath, -1);
+
+    public static IResourceBuilder<UnityProjectResource> AddUnityProject(
+        this IDistributedApplicationBuilder builder,
+        string name,
+        string projectPath,
+        int sceneIndex,
+        string url = "http://127.0.0.1",
+        int port = 54021,
+        string? customUnityInstallRoot = null) =>
+            builder.AddUnityProject(name, projectPath, sceneIndex.ToString(), url, port, customUnityInstallRoot);
 
     public static IResourceBuilder<UnityProjectResource> AddUnityProject(
         this IDistributedApplicationBuilder builder,
@@ -178,13 +179,12 @@ public static class UnityAspireExtensions
                             {
                                 StartTimeStamp = DateTime.UtcNow,
                                 State = KnownResourceStates.Running,
-                                Urls = s.Urls.Add(
+                                Urls = [
                                     new UrlSnapshot(
                                         unityResource.ControlUrl.ToString(),
                                         unityResource.ControlUrl.ToString(),
                                         false
-                                    )
-                                )
+                                    )]
                             }
                         )
                         .ConfigureAwait(false);
